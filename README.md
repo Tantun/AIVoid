@@ -8,7 +8,7 @@ To train select the learning and game parameters in GameParameters and LearnPara
 
 
 ## Dependencies:
-* Python 2.x
+* Python 2.7
 * Numpy python package
 * Tkinter python package
 
