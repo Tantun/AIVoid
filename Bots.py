@@ -67,7 +67,7 @@ class Bot:
 
 class BotTrain(Bot):
     # A bot that performs reinforcement learning to opitmize the Theta1, Theta2 parameters in the neural network
-    def __init__(self, GameParameters, HiddenSize=12, gamma=0.9995, GameOverCost=1, NSim=500, NTest=100, TestTreshold=200, NumberOfSessions=None, Inertia=0.8, p=0.0, a=1.0, epsilon=0.2, epsilon_decay_rate=1):
+    def __init__(self, GameParameters, HiddenSize=12, gamma=0.9995, GameOverCost=1, NSim=500, NTest=100, TestTreshold=200, NumberOfSessions=None, Inertia=0.8, p=0.0, a=1.0, epsilon=0.2, epsilon_decay_rate=1, discount = 0.999, p_decay_rate=0.5):
         Theta1 = np.random.uniform(-1.0, 1.0, (2*GameParameters["N"]+1, HiddenSize))
         Theta2 = np.random.uniform(-1.0, 1.0, (HiddenSize+1, 1))        
         game = Game(**GameParameters)
@@ -86,9 +86,11 @@ class BotTrain(Bot):
         self.a = a     # Reinforcement learning rate (set to 1.0 since it can be absorbed into gradient descent step factor)
         self.epsilon = epsilon     # Initial gradient descent step factor
         self.epsilon_decay_rate = epsilon_decay_rate     # Exponent in power decay for the gradient descent step factor
+        self.discount = discount    # Discount exponent in reinforcement learning
+        self.p_decay_rate = p_decay_rate    # Exponent in power decay for the policy greedines parameter
 
         self.counter = []    # Container for average and median test scores
-    
+        self.best_score = 0    # Best score among all training sessions
 
         
     def BackPropagate(self, output, expected, layer1, layer2):
@@ -136,7 +138,7 @@ class BotTrain(Bot):
         else:
             estimateL = self.ForwardPropagate('L')
             estimateR = self.ForwardPropagate('R')
-            estimate = min(estimateL[-1], estimateR[-1])
+            estimate = min(estimateL[-1], estimateR[-1])**self.discount
             if result[1]:
                 estimate *= self.gamma
         expected = (1-self.a)*output[-1] + self.a*estimate
@@ -147,11 +149,14 @@ class BotTrain(Bot):
 
     def Training(self):
         # Run NSim consecutive training games
+        train_scores = []
         for i in range(self.NSim):
             stop = False
             while not stop:
                 (update, kill, stop) = self.ReinforcedLearningStep()
+            train_scores.append(self.game.counter)
             self.game = Game(**self.GameParameters)
+        return train_scores
 
             
             
@@ -166,10 +171,13 @@ class BotTrain(Bot):
                 self.game.UpdateStep()
             alist.append(self.game.counter)
             self.game = Game(**self.GameParameters)
-        print alist
         m1 = sum(alist)/(len(alist)+0.0)
         m2 = np.median(alist)
         self.counter.append((m1,m2))
+        if m1 > self.best_score:
+            self.best_score = m1
+            np.savez("parameters_best", GameParameters = self.GameParameters, Theta1 = self.Theta1, Theta2 = self.Theta2)
+
 
         
 
@@ -180,15 +188,20 @@ class BotTrain(Bot):
         i = 0
         while keep_going:
             i += 1
-            self.Training()
-            self.Testing()
             print
             print "N:", self.game.N
             print "Session:", i
-            print "Test Results:", self.counter
+            train_scores = self.Training()
+            print "Train average and median score:", sum(train_scores)/(len(train_scores)+0.0), np.median(train_scores)
+            self.Testing()
+            print "Test Results:", self.counter            
             new, old = self.counter[-1][-1], self.counter[-2][-1]
             self.epsilon *= (old/new)**self.epsilon_decay_rate
             print "Gradient Learning Rate:", self.epsilon
+            self.p = 1 - (1-self.p)*((old/new)**self.p_decay_rate)
+            if self.p < 0:
+                self.p = 0.0
+            print "p", self.p
             print
             if self.TestTreshold == None and not self.NumberOfSessions == None:
                 if i >= self.NumberOfSessions:
