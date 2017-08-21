@@ -180,7 +180,6 @@ if who == 'human':
     GameParameters = {'N':howmany, 'DownSideRatio':3, 'SleepTime':howfast, 'R':25, 'r':5, 'Height':400, 'Halfwidth':200,
                       'GlobalHeight':600, 'GlobalWidth':800, 'Thickness':20, 'RandomTreshold':0.2, 'RandomStep':1,
                       'RandomVertTreshold':0.2, 'RandomVertStep':1, 'MaxScore':None}
-    # GameParameters['N'], GameParameters['SleepTime'] = 7, 5  # Override selected settings
     app=PlayHuman(GameParameters)
     app.master.mainloop()
 
