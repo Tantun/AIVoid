@@ -13,14 +13,13 @@ class Bot:
         self.game = game
 
 
-        
     def Sigmoid(self, x):
         return (1 + math.exp((-1)*x))**(-1)
 
     
-    
     def PreProcess(self, action):
-        # Use the relative coordinates of the falling objects to generate the input numpy vector the neural network (exploit game symmetry to use only one net)
+        # Use the relative coordinates of the falling objects to generate the input numpy vector
+        # the neural network (exploit game symmetry to use only one net)
         state_new = []
         for aster in self.game.asteroids:          # Scaling input values
             state_new.append(aster[0]/(self.game.Halfwidth+0.0))
@@ -34,10 +33,10 @@ class Bot:
             layer1[i, 0] = state_new[i]
         return layer1
 
-    
 
     def ForwardPropagate(self, action):
-        # Evalue the neural network for the current game state with the given L/R action; Returns triple of values/vectors (one for each layer)
+        # Evalue the neural network for the current game state with the given L/R action;
+        # Returns triple of values/vectors (one for each layer)
         layer1 = self.PreProcess(action)
         layer2_temp = np.dot(np.transpose(self.Theta1), layer1)
         for i in range(layer2_temp.shape[0]):
@@ -46,7 +45,6 @@ class Bot:
         layer3 = np.dot(np.transpose(self.Theta2), layer2)
         result = self.Sigmoid(layer3[0,0])
         return (layer1, layer2, result)
-
 
     
     def TestStep(self):
@@ -63,11 +61,12 @@ class Bot:
 
 
 
-
-
 class BotTrain(Bot):
-    # A bot that performs reinforcement learning to opitmize the Theta1, Theta2 parameters in the neural network
-    def __init__(self, GameParameters, HiddenSize=12, gamma=0.9995, GameOverCost=1, NSim=500, NTest=100, TestTreshold=200, NumberOfSessions=None, Inertia=0.8, p=0.0, a=1.0, epsilon=0.2, epsilon_decay_rate=1, discount = 0.999, p_decay_rate=0.5):
+    # A bot that performs reinforcement learning to opitmize the
+    # Theta1, Theta2 parameters in the neural network
+    def __init__(self, GameParameters, HiddenSize=12, gamma=0.9995, GameOverCost=1,
+                 NSim=500, NTest=100, TestTreshold=200, NumberOfSessions=None, Inertia=0.8,
+                 p=0.0, a=1.0, epsilon=0.2, epsilon_decay_rate=1, discount = 0.999, p_decay_rate=0.5):
         Theta1 = np.random.uniform(-1.0, 1.0, (2*GameParameters["N"]+1, HiddenSize))
         Theta2 = np.random.uniform(-1.0, 1.0, (HiddenSize+1, 1))        
         game = Game(**GameParameters)
@@ -79,7 +78,7 @@ class BotTrain(Bot):
         self.GameOverCost = GameOverCost     # Game Over Cost (set to 1.0 for standard game cost function E[gamma^N])
         self.NSim = NSim     # Number of consecutive learning games
         self.NTest = NTest     # Number of consecutive test games
-        self.TestTreshold = TestTreshold    # Stop learning when median test score goes over TestTreshold (set to None for fixed number of sessions)
+        self.TestTreshold = TestTreshold    # Stop when median score over TestTreshold (None for fixed number of sessions)
         self.NumberOfSessions = NumberOfSessions     # Number of learn train/test session (active only if TestTreshold = None)
         self.Inertia = Inertia     # (1 - Inertia) is the probability of resampling the game direction while learning
         self.p = p     # Probability of chosing learned move in reinforcement learning        
@@ -94,7 +93,8 @@ class BotTrain(Bot):
 
         
     def BackPropagate(self, output, expected, layer1, layer2):
-        # Backpropagation algorithm for neural network; computes the partial derivatives with respect to parameters and performs the stochastic gradient descent
+        # Backpropagation algorithm for neural network;
+        # computes the partial derivatives with respect to parameters and performs the stochastic gradient descent
         delta3 = output - expected
         delta2 = delta3*self.Theta2
         for i in range(self.HiddenSize):
@@ -106,7 +106,6 @@ class BotTrain(Bot):
             self.Theta2[i,0] -= self.epsilon*delta3*layer2[i,0]
   
 
-            
     def ReinforcedLearningStep(self):
         # Performs one step of reinforcement learning
         t = random.random()
@@ -129,7 +128,8 @@ class BotTrain(Bot):
                 self.game.ChangeDirection('R')
                 
         if random.random()<0.00002:
-            # Occasionally prints out the current value of the network (useful for adjusting various learning parameters, especially gamma)
+            # Occasionally prints out the current value of the network
+            # useful for adjusting various learning parameters, especially gamma
             print output[-1]
             
         result = self.game.UpdateStep()
@@ -146,7 +146,6 @@ class BotTrain(Bot):
         return result
 
     
-
     def Training(self):
         # Run NSim consecutive training games
         train_scores = []
@@ -159,9 +158,9 @@ class BotTrain(Bot):
         return train_scores
 
             
-            
     def Testing(self):
-        # Run NTest consecutive test games to evaluate learned performance; prints out all the test values and records average and median values
+        # Run NTest consecutive test games to evaluate learned performance;
+        # prints out all the test values and records average and median values
         s = 0
         alist = []
         for i in range(self.NTest):
@@ -176,10 +175,8 @@ class BotTrain(Bot):
         self.counter.append((m1,m2))
         if m1 > self.best_score:
             self.best_score = m1
-            np.savez("parameters_best", GameParameters = self.GameParameters, Theta1 = self.Theta1, Theta2 = self.Theta2)
+            np.savez("Data/parameters_best", GameParameters = self.GameParameters, Theta1 = self.Theta1, Theta2 = self.Theta2)
 
-
-        
 
     def TrainSession(self):
         # Performs a learning session until median scores achieves TestTreshold or for fixed number of learn/test sessions

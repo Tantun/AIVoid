@@ -6,7 +6,9 @@ random.seed()
 
 class Game:
     # This is the main game class that is used by both the GUI module and the AI module
-    def __init__(self, N=4, DownSideRatio=3, SleepTime=5, R=25, r=5, Height=400, Halfwidth=200, GlobalHeight=600, GlobalWidth=800, Thickness=20, RandomTreshold=0.2, RandomStep=1, RandomVertTreshold=0.2, RandomVertStep=1, MaxScore=None):
+    def __init__(self, N=4, DownSideRatio=3, SleepTime=5, R=25, r=5, Height=400, Halfwidth=200,
+                 GlobalHeight=600, GlobalWidth=800, Thickness=20, RandomTreshold=0.2, RandomStep=1,
+                 RandomVertTreshold=0.2, RandomVertStep=1, MaxScore=None):
         self.N = N     # number of falling objects
         self.DownSideRatio = DownSideRatio     # ratio fall speed/left-right speed (integer)
         self.SleepTime = SleepTime     # delay time between steps, game is progressing slower for higher values
@@ -34,8 +36,7 @@ class Game:
             else:
                 x = (Halfwidth + R)/2 + (t-0.5)*(Halfwidth-R)
             self.asteroids.append([x,2*Height/3+(i+1)*Height/(3*N)])
-
-            
+   
 
     def ChangeDirection(self, direction):
         if direction == 'L':
@@ -43,7 +44,6 @@ class Game:
         if direction == 'R':
             self.Direction = 'R'
 
-            
             
     def GameOver(self):
         # Testing for game over
@@ -53,7 +53,6 @@ class Game:
         if not self.MaxScore == None and self.counter >= self.MaxScore:
             return True
         return False
-
 
     
     def Destroy(self):
@@ -68,7 +67,6 @@ class Game:
         return Kill
 
 
-    
     def UpdateStep(self):
         # Updating locations of falling objects at pixel moves.
         # Returns triple to determine:
